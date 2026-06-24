@@ -11,7 +11,7 @@ class SimulationState:
             for _ in range(num_asteroids)
         ], dtype=float)
 
-        # velocidades (vx, vy)
+        # velocidad (vx, vy)
         self.velocities = np.zeros((num_asteroids, 2), dtype=float)
 
         # masas
