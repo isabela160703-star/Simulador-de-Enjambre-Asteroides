@@ -1,6 +1,4 @@
 import pygame
-
-
 class Renderer:
     def __init__(self, width, height):
         pygame.init()
