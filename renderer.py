@@ -4,7 +4,6 @@ class Renderer:
         pygame.init()
         self.width = width
         self.height = height
-
         self.screen = pygame.display.set_mode((width, height))
         self.clock = pygame.time.Clock()
 
