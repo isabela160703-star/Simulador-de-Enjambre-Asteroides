@@ -16,15 +16,23 @@ def worker_compute_forces(args):
         chunk_forces[idx] = np.sum(direction * force_mag[:, np.newaxis], axis=0)
     return chunk_forces
 
-def update_state(state, dt):
-    forces = compute_forces(state.positions, state.masses)
+def update_state_parallel(state, dt, pool, num_workers):
+    n = state.num_asteroids
+    chunk_size = n // num_workers
+    tasks = []
     
-    # F = M * A -> A = F / M
+    for i in range(num_workers):
+        start = i * chunk_size
+        end = n if i == num_workers - 1 else (i + 1) * chunk_size
+        tasks.append((state.positions, state.masses, start, end))
+
+    results = pool.map(worker_compute_forces, tasks)
+    forces = np.vstack(results)
+
     accelerations = forces / state.masses
     state.velocities += accelerations * dt
     state.positions += state.velocities * dt
 
-    # Rebote en los bordes de la pantalla
     state.velocities[state.positions[:, 0] < 0, 0] *= -1
     state.velocities[state.positions[:, 0] > state.width, 0] *= -1
     state.velocities[state.positions[:, 1] < 0, 1] *= -1
