@@ -19,20 +19,8 @@ def compute_forces(positions, masses):
 
     return forces
 
-def update_state_parallel(state, dt, pool, num_workers):
-    n = state.num_asteroids
-    chunk_size = n // num_workers
-
-    tasks = []
-
-    for i in range(num_workers):
-        start = i * chunk_size
-        end = n if i == num_workers - 1 else (i + 1) * chunk_size
-
-        tasks.append((state.positions, state.masses, start, end))
-
-    results = pool.map(worker, tasks)
-    forces = np.vstack(results)
+def update_state(state, dt):
+    forces = compute_forces(state.positions, state.masses)
 
     accelerations = forces / state.masses
 
