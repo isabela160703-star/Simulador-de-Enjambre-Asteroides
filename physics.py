@@ -1,19 +1,26 @@
 import numpy as np
+import multiprocessing as mp
 
 G = 0.5  
 SOFTENING = 5.0  
 
-def compute_forces(positions, masses):
+def worker(args):
+    positions, masses, start, end = args
     n = len(positions)
-    forces = np.zeros((n, 2))
-    for i in range(n):
+
+    forces = np.zeros((end - start, 2))
+
+    for idx, i in enumerate(range(start, end)):
         diff = positions - positions[i]
-        dist_sq = np.sum(diff**2, axis=1) + SOFTENING**2
+        dist_sq = np.sum(diff ** 2, axis=1) + SOFTENING ** 2
+
         force_mag = G * masses[i] * masses[:, 0] / dist_sq
-        
         dist = np.sqrt(dist_sq)
-        direction = diff / dist[:, np.newaxis]
-        forces[i] = np.sum(direction * force_mag[:, np.newaxis], axis=0)
+
+        direction = diff / dist[:, None]
+
+        forces[idx] = (direction * force_mag[:, None]).sum(axis=0)
+
     return forces
 
 def update_state(state, dt):
