@@ -1,32 +1,58 @@
 import time
-from state import SimulationState
-from renderer import Renderer
+import multiprocessing as mp
+
+from state import GameState
 from physics import update_state
+from parallel import update_state_parallel
+from renderer import Renderer
+
+
+def create_state(n, w, h):
+    import numpy as np
+    import random
+
+    positions = np.array([
+        [random.uniform(0, w), random.uniform(0, h)]
+        for _ in range(n)
+    ], dtype=float)
+
+    velocities = np.zeros((n, 2))
+    masses = np.ones((n, 1))
+
+    return GameState(
+        positions=positions,
+        velocities=velocities,
+        masses=masses,
+        width=w,
+        height=h,
+        num_asteroids=n
+    )
+
 
 def main():
     WIDTH, HEIGHT = 800, 600
-    NUM_ASTEROIDS = 150 # Puedes subir esto, pero el FPS bajará en modo serial
-    DT = 0.2
+    N = 300
+    DT = 0.1
 
-    state = SimulationState(NUM_ASTEROIDS, WIDTH, HEIGHT)
+    state = create_state(N, WIDTH, HEIGHT)
     renderer = Renderer(WIDTH, HEIGHT)
 
-    print("Iniciando simulación...")
-    
+    print("Simulación iniciada")
+
     while True:
         renderer.handle_events()
-        
-        start_time = time.time()
-        # Calcula la física del cuadro actual
-        update_state(state, DT)
-        end_time = time.time()
-        
-        # Prevenir división por 0
-        compute_time = max(end_time - start_time, 0.001)
-        fps = 1.0 / compute_time
-        
+
+        start = time.time()
+
+        state = update_state(state, DT)  # secuencial (cambia aquí si quieres paralelo)
+
+        end = time.time()
+
+        fps = 1 / max(end - start, 0.0001)
+
         renderer.draw(state, fps)
-        renderer.clock.tick(60) # Límite de 60 cuadros por segundo
+        renderer.clock.tick(60)
+
 
 if __name__ == "__main__":
     main()
