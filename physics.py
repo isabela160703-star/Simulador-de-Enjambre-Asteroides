@@ -23,17 +23,45 @@ def worker(args):
 
     return forces
 
-def update_state(state, dt):
-    forces = compute_forces(state.positions, state.masses)
-    
-    # F = M * A -> A = F / M
-    accelerations = forces / state.masses
-    state.velocities += accelerations * dt
-    state.positions += state.velocities * dt
+def update_state_parallel(state, dt, pool, num_workers):
+    n = state.num_asteroids
+    chunk_size = n // num_workers
 
-    # Rebote en los bordes de la pantalla
-    state.velocities[state.positions[:, 0] < 0, 0] *= -1
-    state.velocities[state.positions[:, 0] > state.width, 0] *= -1
-    state.velocities[state.positions[:, 1] < 0, 1] *= -1
-    state.velocities[state.positions[:, 1] > state.height, 1] *= -1
-    state.positions = np.clip(state.positions, [0, 0], [state.width, state.height])
+    tasks = []
+
+    for i in range(num_workers):
+        start = i * chunk_size
+        end = n if i == num_workers - 1 else (i + 1) * chunk_size
+
+        tasks.append((state.positions, state.masses, start, end))
+
+    results = pool.map(worker, tasks)
+    forces = np.vstack(results)
+
+    accelerations = forces / state.masses
+
+    new_velocities = state.velocities + accelerations * dt
+    new_positions = state.positions + new_velocities * dt
+
+    # rebote
+    new_velocities[new_positions[:, 0] < 0, 0] *= -1
+    new_velocities[new_positions[:, 0] > state.width, 0] *= -1
+    new_velocities[new_positions[:, 1] < 0, 1] *= -1
+    new_velocities[new_positions[:, 1] > state.height, 1] *= -1
+
+    new_positions = np.clip(
+        new_positions,
+        [0, 0],
+        [state.width, state.height]
+    )
+
+    from state import GameState
+
+    return GameState(
+        positions=new_positions,
+        velocities=new_velocities,
+        masses=state.masses,
+        width=state.width,
+        height=state.height,
+        num_asteroids=state.num_asteroids
+    )
