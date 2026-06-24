@@ -1,13 +1,11 @@
 import numpy as np
 import random
-
-
 class SimulationState:
     def __init__(self, num_asteroids, width, height):
         self.width = width
         self.height = height
 
-        # posiciones (x, y)
+        # coordenadas (x, y)
         self.positions = np.array([
             [random.uniform(0, width), random.uniform(0, height)]
             for _ in range(num_asteroids)
