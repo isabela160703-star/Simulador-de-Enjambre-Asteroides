@@ -16,7 +16,7 @@ class Renderer:
     def draw(self, state, fps):
         self.screen.fill((0, 0, 0))
 
-        # dibujar asteroides
+        # dibujo asteroides
         for pos in state.positions:
             pygame.draw.circle(
                 self.screen,
@@ -25,9 +25,8 @@ class Renderer:
                 2
             )
 
-        # mostrar FPS
+        # mostrador de FPS
         font = pygame.font.SysFont("Arial", 18)
         text = font.render(f"FPS: {int(fps)}", True, (0, 255, 0))
         self.screen.blit(text, (10, 10))
-
         pygame.display.flip()
